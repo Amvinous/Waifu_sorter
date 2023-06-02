@@ -18,7 +18,7 @@ class Character:
 path = pathlib.Path("Users")
 user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
 
-
+# ill commit to relationship with you
 def get_list(user_input):
     # ?returns 2 variables
     query = """
