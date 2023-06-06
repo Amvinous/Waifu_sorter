@@ -13,12 +13,10 @@ class Character:
 
 
 # Inputs
-
-
 path = pathlib.Path("Users")
 user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
 
-# ill commit to relationship with you
+
 def get_list(user_input):
     # ?returns 2 variables
     query = """
@@ -85,10 +83,45 @@ def fetch(user_input: str):
     else:
         print("User not in memory  \n Searching Anilist")
         username, char_list = get_list(user_input)
+        print("Found")
     return username, char_list
 
 
-#
+def merge_sort(array):
+    while len(array) > 1:
+        mid = len(array) // 2
+        left = array[:mid]
+        right = array[mid:]
+
+        merge_sort(left)
+        merge_sort(right)
+
+        left_index = right_index = array_index = 0
+
+        while left_index < len(left) and right_index < len(right):
+            print(left[left_index][0], right[right_index][0])
+            user_input = input("0 or 1")
+            if user_input == 0:
+                array[array_index] = left[left_index]
+                left_index += 1
+            else:
+                array[array_index] = right[right_index]
+                right_index += 1
+            array_index += 1
+
+        while left_index < len(left):
+            array[array_index] = left[left_index]
+            left_index += 1
+            array_index += 1
+
+        while right_index < len(right):
+            array[array_index] = right[right_index]
+            right_index += 1
+            array_index += 1
+
+        sorted_list = left+right
+        return sorted_list
+
 
 if __name__ == '__main__':
     user_input = input("Enter Account name: ").strip()
@@ -96,4 +129,5 @@ if __name__ == '__main__':
 
     object_dict = {char[0]: Character(char[0], char[1]) for char in char_list}
 
-# ! SORTING
+    sorted_list = reversed(merge_sort(char_list))
+
