@@ -3,6 +3,7 @@ import json
 import pathlib
 from fuzzywuzzy import fuzz
 import os
+from random import sample
 
 
 class Character:
@@ -93,46 +94,37 @@ def fetch(user_input: str):
 ##
 # * Sorting logic
 def merge_sort(array):
-    while len(array) > 1:
-        mid = len(array) // 2
-        left = array[:mid]
-        right = array[mid:]
+    mid = len(array) // 2
+    left = array[:mid]
+    right = array[mid:]
+    return merge(left, right)
 
-        merge_sort(left)
-        merge_sort(right)
-
-        left_index = right_index = array_index = 0
+            #merge_sort(left)
+            #merge_sort(right)
+def merge(left, right):
+        left_index = right_index = 0
+        result = []
 
         while left_index < len(left) and right_index < len(right):
-            print(left[left_index], right[right_index])
+            print(f'{left[left_index]} or {right[right_index]}')
             user_input = input("0 or 1")
-            if user_input == 0:
-                array[array_index] = left[left_index]
+            if user_input =='exit':
+                return result
+            elif int(user_input) == 0:
+                result.append(left[left_index])
                 left_index += 1
-            else:
-                array[array_index] = right[right_index]
+            elif int(user_input) == 1:
+                result.append(right[right_index])
                 right_index += 1
-            array_index += 1
 
-        while left_index < len(left):
-            array[array_index] = left[left_index]
-            left_index += 1
-            array_index += 1
-
-        while right_index < len(right):
-            array[array_index] = right[right_index]
-            right_index += 1
-            array_index += 1
-
-        sorted_list = left + right
-        return sorted_list
+        return result
 
 
 if __name__ == '__main__':
     user_input = input("Enter Account name: ").strip()
     username, char_list = fetch(user_input)
-
+##
     object_dict = {char[0]: Character(char[0], char[1]) for char in char_list}
     name_list = [char[0] for char in char_list]
-
-    sorted_list = reversed(merge_sort(name_list))
+    random_list = sample(name_list, len(name_list))
+    sorted_list = list(reversed(merge_sort(random_list)))
