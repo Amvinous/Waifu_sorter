@@ -12,7 +12,9 @@ class Character:
         self.score = score
 
 
-# Inputs
+##
+# * Retrieve information
+
 path = pathlib.Path("Users")
 user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
 
@@ -71,7 +73,8 @@ def get_list(user_input):
     return user, char_list
 
 
-#
+##
+# * Sends query to anilist if person not in memory
 def fetch(user_input: str):
     for user in user_list:
         username = os.path.splitext(user.name)[0]
@@ -87,6 +90,8 @@ def fetch(user_input: str):
     return username, char_list
 
 
+##
+# * Sorting logic
 def merge_sort(array):
     while len(array) > 1:
         mid = len(array) // 2
@@ -99,7 +104,7 @@ def merge_sort(array):
         left_index = right_index = array_index = 0
 
         while left_index < len(left) and right_index < len(right):
-            print(left[left_index][0], right[right_index][0])
+            print(left[left_index], right[right_index])
             user_input = input("0 or 1")
             if user_input == 0:
                 array[array_index] = left[left_index]
@@ -119,7 +124,7 @@ def merge_sort(array):
             right_index += 1
             array_index += 1
 
-        sorted_list = left+right
+        sorted_list = left + right
         return sorted_list
 
 
@@ -128,6 +133,6 @@ if __name__ == '__main__':
     username, char_list = fetch(user_input)
 
     object_dict = {char[0]: Character(char[0], char[1]) for char in char_list}
+    name_list = [char[0] for char in char_list]
 
-    sorted_list = reversed(merge_sort(char_list))
-
+    sorted_list = reversed(merge_sort(name_list))
