@@ -1,9 +1,8 @@
-# * imports
+## * imports
 import requests as rq
 import json
 import pathlib
 import os
-import traceback
 from fuzzywuzzy import fuzz
 from random import sample
 
@@ -20,132 +19,127 @@ class MergeExitException(Exception):
 
 
 ##
-# * Retrieve information
+class Sorter:
+    def __init__(self, user_input, path, user_list):
+        # * Retrieve information
+        self.user_input = user_input
+        self.path = path
+        self.user_list = user_list
 
-path = pathlib.Path("Users")
-user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
-
-
-def get_list(user_input):
-    # ?returns 2 variables
-    query = """
-query ($id: String, $page: Int){
-            User(search: $id){
-                name
-                favourites {
-                    characters (page : $page){
-                        pageInfo{
-                        hasNextPage
-                    }
-                    nodes {
-                        name {
-                          full
+    # * Gets list from memory
+    def get_list(self, user_input):
+        # ?returns 2 variables
+        query = """
+    query ($id: String, $page: Int){
+                User(search: $id){
+                    name
+                    favourites {
+                        characters (page : $page){
+                            pageInfo{
+                            hasNextPage
                         }
-                        image {
-                          medium
+                        nodes {
+                            name {
+                              full
+                            }
+                            image {
+                              medium
+                            }
+                            gender
                         }
-                        gender
                     }
                 }
             }
         }
-    }
-    """
+        """
 
-    variables = {
-        "id": user_input,
-        "page": 1
-    }
-    url = 'https://graphql.anilist.co'
+        variables = {
+            "id": user_input,
+            "page": 1
+        }
+        url = 'https://graphql.anilist.co'
 
-    char_list = []
+        char_list = []
 
-    while True:
-        response = rq.post(url, json={'query': query, 'variables': variables}).json()
-        data = response['data']["User"]["favourites"]["characters"]
+        while True:
+            response = rq.post(url, json={'query': query, 'variables': variables}).json()
+            data = response['data']["User"]["favourites"]["characters"]
 
-        for character in data["nodes"]:
-            name = character["name"]["full"]
-            pic = character["image"]["medium"]
-            gender = character["gender"]
+            for character in data["nodes"]:
+                name = character["name"]["full"]
+                pic = character["image"]["medium"]
+                gender = character["gender"]
 
-            # ? add more attributes to the dictionary here and in class
-            char_list.append((name, pic, gender))
+                # ? add more attributes to the dictionary here and in class
+                char_list.append((name, pic, gender))
 
-        if not data["pageInfo"]["hasNextPage"]:
-            break
+            if not data["pageInfo"]["hasNextPage"]:
+                break
+            else:
+                variables["page"] += 1
+
+        user = response["data"]["User"]["name"]
+        new_user = open(path / f'{user}.txt', "w")
+        new_user.write(json.dumps(char_list, indent=2))
+        return user, char_list
+
+    # * Searches memory
+    def fetch(self, user_input: str):
+        for user in user_list:
+            username = os.path.splitext(user.name)[0]
+            comparison = fuzz.partial_ratio(username, user_input)
+            if comparison > 80:
+                f = open(user)
+                char_list = json.load(f)
+                break
         else:
-            variables["page"] += 1
+            print("User not in memory  \n Searching Anilist")
+            username, char_list = self.get_list(user_input)
+            print("Found")
+        return username, char_list
 
-    user = response["data"]["User"]["name"]
-    new_user = open(path / f'{user}.txt', "w")
-    new_user.write(json.dumps(char_list, indent=2))
-    return user, char_list
+    # * Sorting
+    def merge_sort(self, array):
+        if len(array) < 2:
+            return array
+        mid = len(array) // 2
+        left = self.merge_sort(array[:mid])
+        right = self.merge_sort(array[mid:])
 
+        if left is None or right is None:
+            return None
+        return self.merge(left, right)
 
-##
-# * Sends query to anilist if person not in memory
-def fetch(user_input: str):
-    for user in user_list:
-        username = os.path.splitext(user.name)[0]
-        comparison = fuzz.partial_ratio(username, user_input)
-        if comparison > 80:
-            f = open(user)
-            char_list = json.load(f)
-            break
-    else:
-        print("User not in memory  \n Searching Anilist")
-        username, char_list = get_list(user_input)
-        print("Found")
-    return username, char_list
+    def merge(self, left, right):
+        if not len(left) or not len(right):
+            return left or right
+        left_index, right_index = 0, 0
+        result = []
 
-
-##
-# * Sorting logic
-
-def merge_sort(array):
-    if len(array) < 2:
-        return array
-    mid = len(array) // 2
-    left = merge_sort(array[:mid])
-    right = merge_sort(array[mid:])
-
-    if left is None or right is None:
-        return None
-    return merge(left, right)
-
-
-def merge(left, right):
-    if not len(left) or not len(right):
-        return left or right
-
-    left_index, right_index = 0, 0
-    result = []
-
-    # while left_index < len(left) and right_index < len(right):
-    while (len(result) < len(left) + len(right)):
-        print(f'{left[left_index]} or {right[right_index]}')
-        user_input = input("0 or 1")
-        if user_input == 'exit':
-            raise MergeExitException
-        elif int(user_input) == 0:
-            result.append(left[left_index])
-            left_index += 1
-        elif int(user_input) == 1:
-            result.append(right[right_index])
-            right_index += 1
-        # elif user_input == "undo":
-        if left_index == len(left) or right_index == len(right):
-            result.extend(left[left_index:] or right[right_index:])
-            break
-    return result
+        while (len(result) < len(left) + len(right)):
+            print(f'{left[left_index]} or {right[right_index]}')
+            user_input = input("0 or 1")
+            if user_input == 'exit':
+                raise MergeExitException
+            elif int(user_input) == 0:
+                result.append(left[left_index])
+                left_index += 1
+            elif int(user_input) == 1:
+                result.append(right[right_index])
+                right_index += 1
+            if left_index == len(left) or right_index == len(right):
+                result.extend(left[left_index:] or right[right_index:])
+                break
+        return result
 
 
 if __name__ == '__main__':
+    # * Inputs
     user_input = input("Enter Account name: ").strip()
-    username, char_list = fetch(user_input)
-
+    path = pathlib.Path("Users")
+    user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
+    Sorting = Sorter(user_input, path, user_list)
+    # * Lists
+    username, char_list = Sorting.fetch(Sorting.user_input)
     object_dict = {char[0]: Character(char[0], char[1], char[2]) for char in char_list}
-    name_list = [char[0] for char in char_list]
-    random_list = sample(name_list, len(name_list))
-    sorted_list = list(merge_sort(random_list))
+    sorted_list = list(Sorting.merge_sort(sample([char[0] for char in char_list], len([char[0] for char in char_list]))))
