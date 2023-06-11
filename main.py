@@ -1,16 +1,22 @@
+# * imports
 import requests as rq
 import json
 import pathlib
-from fuzzywuzzy import fuzz
 import os
+import traceback
+from fuzzywuzzy import fuzz
 from random import sample
 
 
 class Character:
-    def __init__(self, name, pic, score=1):
+    def __init__(self, name, pic, gender):
         self.name = name
         self.pic = pic
-        self.score = score
+        self.gender = gender
+
+
+class MergeExitException(Exception):
+    pass
 
 
 ##
@@ -23,7 +29,7 @@ user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
 def get_list(user_input):
     # ?returns 2 variables
     query = """
-        query ($id: String, $page: Int){
+query ($id: String, $page: Int){
             User(search: $id){
                 name
                 favourites {
@@ -38,6 +44,7 @@ def get_list(user_input):
                         image {
                           medium
                         }
+                        gender
                     }
                 }
             }
@@ -60,8 +67,10 @@ def get_list(user_input):
         for character in data["nodes"]:
             name = character["name"]["full"]
             pic = character["image"]["medium"]
+            gender = character["gender"]
+
             # ? add more attributes to the dictionary here and in class
-            char_list.append((name, pic))
+            char_list.append((name, pic, gender))
 
         if not data["pageInfo"]["hasNextPage"]:
             break
@@ -93,38 +102,50 @@ def fetch(user_input: str):
 
 ##
 # * Sorting logic
+
 def merge_sort(array):
+    if len(array) < 2:
+        return array
     mid = len(array) // 2
-    left = array[:mid]
-    right = array[mid:]
+    left = merge_sort(array[:mid])
+    right = merge_sort(array[mid:])
+
+    if left is None or right is None:
+        return None
     return merge(left, right)
 
-            #merge_sort(left)
-            #merge_sort(right)
+
 def merge(left, right):
-        left_index = right_index = 0
-        result = []
+    if not len(left) or not len(right):
+        return left or right
 
-        while left_index < len(left) and right_index < len(right):
-            print(f'{left[left_index]} or {right[right_index]}')
-            user_input = input("0 or 1")
-            if user_input =='exit':
-                return result
-            elif int(user_input) == 0:
-                result.append(left[left_index])
-                left_index += 1
-            elif int(user_input) == 1:
-                result.append(right[right_index])
-                right_index += 1
+    left_index, right_index = 0, 0
+    result = []
 
-        return result
+    # while left_index < len(left) and right_index < len(right):
+    while (len(result) < len(left) + len(right)):
+        print(f'{left[left_index]} or {right[right_index]}')
+        user_input = input("0 or 1")
+        if user_input == 'exit':
+            raise MergeExitException
+        elif int(user_input) == 0:
+            result.append(left[left_index])
+            left_index += 1
+        elif int(user_input) == 1:
+            result.append(right[right_index])
+            right_index += 1
+        # elif user_input == "undo":
+        if left_index == len(left) or right_index == len(right):
+            result.extend(left[left_index:] or right[right_index:])
+            break
+    return result
 
 
 if __name__ == '__main__':
     user_input = input("Enter Account name: ").strip()
     username, char_list = fetch(user_input)
-##
-    object_dict = {char[0]: Character(char[0], char[1]) for char in char_list}
+
+    object_dict = {char[0]: Character(char[0], char[1], char[2]) for char in char_list}
     name_list = [char[0] for char in char_list]
     random_list = sample(name_list, len(name_list))
-    sorted_list = list(reversed(merge_sort(random_list)))
+    sorted_list = list(merge_sort(random_list))
