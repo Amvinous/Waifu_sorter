@@ -164,13 +164,12 @@ icon_image_rgba = icon_image.convert("RGBA")
 image_data_rgba = icon_image_rgba.tobytes()
 image_data_size = icon_image_rgba.size
 new_icon = pygame.image.fromstring(image_data_rgba, icon_image.size, "RGBA")
+display.set_icon(new_icon)
 
 # ? add images
 
 image1 = pygame.image.load(BytesIO(rq.get(object_dict["Miku Nakano"].pic).content))
 image2 = pygame.image.load(BytesIO(rq.get(object_dict["Kana Arima"].pic).content))
-
-display.set_icon(new_icon)
 
 # ? loop
 
