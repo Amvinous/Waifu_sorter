@@ -1,13 +1,20 @@
 import requests as rq
 import json
 import os
+import sys
 from fuzzywuzzy import fuzz
 from random import sample
 import pathlib
 from Character import Character
 
+sys.tracebacklimit = 0
+
 
 class MergeExitException(Exception):
+    pass
+
+
+class PersonNotFound(Exception):
     pass
 
 
@@ -19,7 +26,7 @@ class Sorter:
         self.user_list = user_list
 
     # * Gets list from memory
-    def get_list(self, user_input):
+    def get_list(self):
         # ?returns 2 variables
         query = """
     query ($id: String, $page: Int){
@@ -46,7 +53,7 @@ class Sorter:
         """
 
         variables = {
-            "id": user_input,
+            "id": self.user_input,
             "page": 1
         }
         url = 'https://graphql.anilist.co'
@@ -55,6 +62,10 @@ class Sorter:
 
         while True:
             response = rq.post(url, json={'query': query, 'variables': variables}).json()
+
+            if response["data"]["User"] is None:
+                raise PersonNotFound
+
             data = response['data']["User"]["favourites"]["characters"]
 
             for character in data["nodes"]:
@@ -76,17 +87,17 @@ class Sorter:
         return user, char_list
 
     # * Searches memory
-    def fetch(self, user_input: str):
+    def fetch(self):
         for user in self.user_list:
             username = os.path.splitext(user.name)[0]
-            comparison = fuzz.partial_ratio(username, user_input)
+            comparison = fuzz.partial_ratio(username, self.user_input)
             if comparison > 80:
-                f = open(user)
-                char_list = json.load(f)
+                user_in_memory = open(user)
+                char_list = json.load(user_in_memory)
                 break
         else:
             print("User not in memory  \n Searching Anilist")
-            username, char_list = self.get_list(user_input)
+            username, char_list = self.get_list()
             print("Found")
         return username, char_list
 
@@ -130,7 +141,7 @@ if __name__ == '__main__':
     user_input = input("Enter Account name: ").strip()
     path = pathlib.Path("Users")
     user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
-    Sort = Sorter(user_input, path, user_list)
+    sort = Sorter(user_input, path, user_list)
     # * Lists
-    username, char_list = Sort.fetch(Sort.user_input)
+    username, char_list = sort.fetch()
     object_dict = {char[0]: Character(char[0], char[1], char[2]) for char in char_list}
