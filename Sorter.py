@@ -1,13 +1,10 @@
 import requests as rq
 import json
 import os
-import sys
 from fuzzywuzzy import fuzz
 from random import sample
 import pathlib
 from Character import Character
-
-sys.tracebacklimit = 0
 
 
 class MergeExitException(Exception):
@@ -22,8 +19,10 @@ class Sorter:
     def __init__(self, user_input, path, user_list):
         # * Retrieve information
         self.user_input = user_input
+        self.user = ""
         self.path = path
         self.user_list = user_list
+        self.object_dict = []
 
     # * Gets list from memory
     def get_list(self):
@@ -83,25 +82,29 @@ class Sorter:
 
         user = response["data"]["User"]["name"]
         new_user = open(self.path / f'{user}.txt', "w")
+        self.user = user
         new_user.write(json.dumps(char_list, indent=2))
-        return user, char_list
+        return char_list
 
     # * Searches memory
+
     def fetch(self):
         for user in self.user_list:
             username = os.path.splitext(user.name)[0]
             comparison = fuzz.partial_ratio(username, self.user_input)
             if comparison > 80:
+                self.user = username
                 user_in_memory = open(user)
                 char_list = json.load(user_in_memory)
                 break
         else:
             print("User not in memory  \n Searching Anilist")
-            username, char_list = self.get_list()
+            char_list = self.get_list()
             print("Found")
-        return username, char_list
+        self.object_dict = {char[0]: Character(char[0], char[1], char[2]) for char in char_list}
+        return char_list
 
-    # * Sorting
+# * Sorting
     def merge_sort(self, array):
         if len(array) < 2:
             return array
@@ -136,12 +139,13 @@ class Sorter:
         return result
 
 
+
+
 if __name__ == '__main__':
     # * Inputs
     user_input = input("Enter Account name: ").strip()
-    path = pathlib.Path("Users")
-    user_list = list(filter(lambda p: p.is_file(), path.glob("*.txt")))
-    sort = Sorter(user_input, path, user_list)
+    user_path = pathlib.Path("Users")
+    user_list = list(filter(lambda p: p.is_file(), user_path.glob("*.txt")))
+    sort = Sorter(user_input, user_path, user_list)
     # * Lists
-    username, char_list = sort.fetch()
-    object_dict = {char[0]: Character(char[0], char[1], char[2]) for char in char_list}
+
