@@ -1,7 +1,5 @@
 # * imports
 import requests as rq
-import pathlib
-from random import sample
 # * images
 from PIL import Image
 from io import BytesIO
@@ -9,19 +7,7 @@ from io import BytesIO
 import pygame
 # * my modules
 from Sorter import Sorter
-
-
-class Button:
-    def __init__(self, x, y, width, height, color):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.color = color
-        self.is_clicked = False
-
-    def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
-
-    def click(self, pos):
-        self.is_clicked = self.rect.collidepoint(pos)
+from Button import Button
 
 
 class RunWindow:
@@ -40,12 +26,12 @@ class RunWindow:
         self.running = True
 
     def init_window(self):
-        # * create the actual window
+        # + create the actual window
         width, height = 400, 600
         self.screen = self.display.set_mode((width, height))
         self.display.set_caption("Anilist Sorter")
         self.screen.fill(self.background_color)
-        # * add different aspect to the window
+        # + add different aspect to the window
         self.make_label(50, 25, width * 0.8, height / 8, sort.user)
         # self.add_images()
         self.add_icon()
@@ -60,9 +46,9 @@ class RunWindow:
         self.display.set_icon(new_icon)
 
     def add_images(self):
-
-        self.image1 = pygame.image.load(BytesIO(sort.object_dict["left"].pic)).convert()
-        self.image2 = pygame.image.load(BytesIO(sort.object_dict["right"].pic)).convert()
+        pass
+        #self.image1 = pygame.image.load(BytesIO(sort.object_dict["left"].pic)).convert()
+        #self.image2 = pygame.image.load(BytesIO(sort.object_dict["right"].pic)).convert()
 
     def make_label(self, x, y, width, height, label):
         pygame.draw.rect(self.screen, (0, 0, 0), (x, y, width, height))
@@ -84,8 +70,8 @@ class RunWindow:
                 if event.type == pygame.QUIT:
                     self.running = False
             if self.initialized:
-                self.screen.blit(self.image1, (50, 150))
-                self.screen.blit(self.image2, (200, 150))
+                #self.screen.blit(self.image1, (50, 150))
+                #self.screen.blit(self.image2, (200, 150))
                 button1.draw(self.screen)
                 button2.draw(self.screen)
             self.display.flip()
@@ -94,16 +80,10 @@ class RunWindow:
 
 
 if __name__ == '__main__':
-    # * Inputs
-    user_input = input("Enter Account name: ").strip()
-    path = pathlib.Path("Users")
-    user_list = list(filter(lambda p: p.is_file(), path.rglob("**/*.txt")))
-    # ! Automatic input
-    # sort = Sorter("Amvi", path, user_list)
-    # ! Manual input
-    sort = Sorter(user_input, path, user_list)
+    sort = Sorter()
 
     # * Lists
+
     sort.fetch()
 
     # * Run Window

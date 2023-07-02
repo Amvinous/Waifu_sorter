@@ -1,29 +1,20 @@
-import json
+# * Get list
 import os
-from fuzzywuzzy import fuzz
-
-from Character import Character
-
-# * imports
-import requests as rq
+import json
 import pathlib
-# * Image
+import requests as rq
+from fuzzywuzzy import fuzz
 from PIL import Image
-from io import BytesIO
-# * pygame
+# * Sorting
 import pygame
-
-
-class MergeExitException(Exception):
-    pass
-
-
-class PersonNotFound(Exception):
-    pass
+from random import sample
+# * My modules
+from Character import Character
+from Exceptions import PersonNotFound, ImagesDownloadFailed
 
 
 class Sorter:
-    def __init__(self, user_input, path, user_list):
+    def __init__(self, ):
         self.clock = None
         self.button1 = None
         self.button2 = None
@@ -32,20 +23,27 @@ class Sorter:
         self.name_list = None
         self.char_list = []
         self.user = None
-        self.user_input = user_input
-        self.path = path
-        self.user_list = user_list
+        self.user_input = input("Enter Account name: ").strip()
+        # ! Automatic input
+        # self.user_input = "Amvi"
+        # ! Manual input
+        self.path = pathlib.Path("Users")
+        self.user_list = list(filter(lambda p: p.is_file(), self.path.rglob("**/*.txt")))
         self.user_path = pathlib.Path()
 
-    # * Gets list from memory
     def download_image(self, file_name, url, path):
         response = rq.get(url)
+        # + response code 200 is success
         if response.status_code == 200:
             with open(path / f'{file_name}.png', "wb") as file:
                 picture = file.write(response.content)
+            return picture
         else:
             print("Error with retrieving images")
-        return picture
+            raise ImagesDownloadFailed
+
+
+    # * Sends query to Anilist
 
     def get_list(self):
         query = """
@@ -99,21 +97,28 @@ class Sorter:
             else:
                 variables["page"] += 1
 
+        # ! Can maybe redefine userpath to path
+
         user = response["data"]["User"]["name"]
+        self.user = user
         self.user_path = self.path / f"{user}"
         self.user_path.mkdir(parents=True, exist_ok=True)
+        # + Saves all information about each character in a .txt
         new_user = open(self.user_path / f'{user}.txt', "w")
-        self.user = user
         new_user.write(json.dumps(self.char_list, indent=2))
         print("Downloading images")
+        # + Downloads images to a subfolder of user
         for character in self.char_list:
             self.download_image(character[0], character[1], self.user_path)
 
-    # * Searches memory
+    # * Gets the list
 
     def fetch(self):
+
+        # + Checks if input is in memory
         for user in self.user_list:
             username = os.path.splitext(user.name)[0]
+            # + fuzzy searching
             comparison = fuzz.partial_ratio(username, self.user_input)
             if comparison > 80:
                 self.user = username
@@ -125,10 +130,13 @@ class Sorter:
             self.get_list()
             print("Found")
 
+        # + Replaces picture url with a picture object
+
         for char in self.char_list:
-            image = Image.open(self.path/self.user/f'{char[0]}.png')
+            image = Image.open(self.path / self.user / f'{char[0]}.png')
             image_data = image.copy()
             char[1] = image_data
+        # + Makes object dictionary with key as name and value object containing all information
         self.object_dict = {char[0]: Character(char[0], char[1], char[2]) for char in self.char_list}
         self.name_list = [char[0] for char in self.char_list]
 
@@ -189,6 +197,7 @@ class Sorter:
         self.screen = screen
         self.button2 = button2
         self.clock = clock
+        # ! add sample
         self.name_list = self.merge_sort(self.name_list)
 
 
