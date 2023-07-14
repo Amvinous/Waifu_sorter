@@ -9,11 +9,14 @@ import fonts.ttf as fonts
 # * my modules
 from Sorter import Sorter
 from Button import Button
+import threading
 
 
 class RunWindow:
 
     def __init__(self):
+        self.button2 = Button(210, 450, 140, 50, (21, 31, 46))
+        self.button1 = Button(50, 450, 140, 50, (21, 31, 46))
         pygame.init()
         pygame.font.init()
         self.initialized = False
@@ -60,22 +63,28 @@ class RunWindow:
         self.screen.blit(text, text_rect)
 
     def main_loop(self):
-
         self.init_window()
-        button1 = Button(50, 450, 140, 50, (21, 31, 46))
-        button2 = Button(210, 450, 140, 50, (21, 31, 46))
-        sort.sorting(self.clock, self.screen, button1, button2)
-        print(sort.name_list)
         while self.running:
             self.clock.tick(5)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-            if self.initialized:
-                # self.screen.blit(self.image1, (50, 150))
-                # self.screen.blit(self.image2, (200, 150))
-                button1.draw(self.screen)
-                button2.draw(self.screen)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if self.button1.click(mouse_pos):
+                            self.button1.is_clicked = True
+                            threading.Thread(target=sort.sorting(self.button1), args=("left",)).start()
+                        elif self.button2.click(mouse_pos):
+                            self.button2.is_clicked = True
+                            threading.Thread(target=sort.sorting(self.button2), args=("right",)).start()
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        self.button1.is_clicked = False
+                        self.button2.is_clicked = False
+            pygame.draw.rect(self.screen, (0, 255, 0) if self.button1.is_clicked else (0, 150, 0), self.button1)
+            pygame.draw.rect(self.screen, (255, 0, 0) if self.button2.is_clicked else (150, 0, 0), self.button2)
             self.display.flip()
 
         pygame.quit()

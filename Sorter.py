@@ -17,10 +17,7 @@ from Exceptions import *
 
 class Sorter:
     def __init__(self, ):
-        self.clock = None
-        self.button1 = None
-        self.button2 = None
-        self.screen = None
+        self.button = None
         self.object_dict = None
         self.name_list = None
         self.char_list = []
@@ -173,30 +170,12 @@ class Sorter:
 
                 print(left[left_index], right[right_index])
 
-                self.clock.tick(5)
-                self.button1.is_clicked = False
-                self.button2.is_clicked = False
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        exit()
-
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        self.button1.click(event.pos)
-                        self.button2.click(event.pos)
-
-                self.button1.draw(self.screen)
-                self.button2.draw(self.screen)
-
-                pygame.display.flip()
-
-                if self.button1.is_clicked:
+                if self.button == "left":
                     char_list[list_index] = left[left_index]
                     left_index += 1
                     list_index += 1
 
-                elif self.button2.is_clicked:
+                elif self.button == "right":
                     char_list[list_index] = right[right_index]
                     right_index += 1
                     list_index += 1
@@ -215,11 +194,9 @@ class Sorter:
             return char_list
 
     # * Sorting
-    def sorting(self, clock, screen, button1, button2):
-        self.clock = clock
-        self.screen = screen
-        self.button1 = button1
-        self.button2 = button2
+
+    def sorting(self, button):
+        self.button = button
         # ! add sample
         # ! Maybe replace this with object_dict and make name_list not needed
         self.name_list = self.merge_sort(self.name_list)
