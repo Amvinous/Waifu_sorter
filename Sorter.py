@@ -14,6 +14,13 @@ import pygame
 from Character import Character
 from Exceptions import *
 
+from enum import Enum
+
+
+class Selection(Enum):
+    LEFT = 0
+    RIGHT = 1
+
 
 class Sorter:
     def __init__(self, ):
@@ -152,15 +159,21 @@ class Sorter:
 
     # * Sorting algorithm
 
-    def merge_sort(self, char_list):
+    def select(self, selection: Selection):
+        self.button = selection
 
-        if len(char_list) > 1:
-            mid = len(char_list) // 2
-            left = char_list[:mid]
-            right = char_list[mid:]
+    def merge_sort(self, _name_list=None):
 
-            self.merge_sort(left)
-            self.merge_sort(right)
+        if _name_list is None:
+            _name_list = self.name_list
+
+        if len(_name_list) > 1:
+            mid = len(_name_list) // 2
+            left = _name_list[:mid]
+            right = _name_list[mid:]
+
+            yield from self.merge_sort(left)
+            yield from self.merge_sort(right)
 
             list_index = 0
             left_index = 0
@@ -168,49 +181,29 @@ class Sorter:
 
             while left_index < len(left) and right_index < len(right):
 
-                print(left[left_index], right[right_index])
-
-                if self.button == "left":
-                    char_list[list_index] = left[left_index]
-                    left_index += 1
-                    list_index += 1
-
-                elif self.button == "right":
-                    char_list[list_index] = right[right_index]
-                    right_index += 1
-                    list_index += 1
+                yield [left[left_index], right[right_index]]
+                match self.button:
+                    case Selection.LEFT:
+                        _name_list[list_index] = left[left_index]
+                        left_index += 1
+                        list_index += 1
+                    case Selection.RIGHT:
+                        _name_list[list_index] = right[right_index]
+                        right_index += 1
+                        list_index += 1
 
             # + Not discard the non-picked value
             while left_index < len(left):
-                char_list[list_index] = left[left_index]
+                _name_list[list_index] = left[left_index]
                 left_index += 1
                 list_index += 1
 
             while right_index < len(right):
-                char_list[list_index] = right[right_index]
+                _name_list[list_index] = right[right_index]
                 right_index += 1
                 list_index += 1
 
-            return char_list
+            return _name_list
 
-    # * Sorting
-
-    def sorting(self, button):
-        self.button = button
-        # ! add sample
+        # ! add random.sample
         # ! Maybe replace this with object_dict and make name_list not needed
-        self.name_list = self.merge_sort(self.name_list)
-
-
-"""
-if __name__ == '__main__':
-    # * Inputs
-    user_input = input("Enter Account name: ").strip()
-    user_path = pathlib.Path("Users")
-    user_list = list(filter(lambda p: p.is_file(), user_path.rglob("**/*.txt")))
-    sort = Sorter(user_input, user_path, user_list)
-    # * Lists
-    sort.fetch()
-    
-    sort = Sorter()
-"""

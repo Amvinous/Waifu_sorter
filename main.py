@@ -7,7 +7,7 @@ from io import BytesIO
 import pygame
 import fonts.ttf as fonts
 # * my modules
-from Sorter import Sorter
+from Sorter import Sorter, Selection
 from Button import Button
 import threading
 
@@ -15,8 +15,8 @@ import threading
 class RunWindow:
 
     def __init__(self):
-        self.button2 = Button(210, 450, 140, 50, (21, 31, 46))
-        self.button1 = Button(50, 450, 140, 50, (21, 31, 46))
+        self.right_button = Button(210, 450, 140, 50, (21, 31, 46))
+        self.left_button = Button(50, 450, 140, 50, (21, 31, 46))
         pygame.init()
         pygame.font.init()
         self.initialized = False
@@ -27,7 +27,6 @@ class RunWindow:
         self.clock = pygame.time.Clock()
         self.image1 = None
         self.image2 = None
-        self.running = True
 
     def init_window(self):
         # + create the actual window
@@ -62,35 +61,56 @@ class RunWindow:
         text_rect = text.get_rect(center=(x + width // 2, y + height // 2))
         self.screen.blit(text, text_rect)
 
-    def main_loop(self):
-        self.init_window()
-        while self.running:
-            self.clock.tick(5)
+    def start_sorting(self):
+        sorting = sort.merge_sort()
+        sort_stage = next(sorting)
+        print(sort_stage)
+        while True:
+            self.clock.tick(60)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.running = False
-            for event in pygame.event.get():
+                    return
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        mouse_pos = pygame.mouse.get_pos()
-                        if self.button1.click(mouse_pos):
-                            self.button1.is_clicked = True
-                            threading.Thread(target=sort.sorting(self.button1), args=("left",)).start()
-                        elif self.button2.click(mouse_pos):
-                            self.button2.is_clicked = True
-                            threading.Thread(target=sort.sorting(self.button2), args=("right",)).start()
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        self.button1.is_clicked = False
-                        self.button2.is_clicked = False
-            pygame.draw.rect(self.screen, (0, 255, 0) if self.button1.is_clicked else (0, 150, 0), self.button1)
-            pygame.draw.rect(self.screen, (255, 0, 0) if self.button2.is_clicked else (150, 0, 0), self.button2)
+
+                        self.left_button.click(event.pos)
+                        self.right_button.click(event.pos)
+
+                        if self.left_button.is_clicked:
+                            sort.select(Selection.LEFT)
+
+                        if self.right_button.is_clicked:
+                            sort.select(Selection.RIGHT)
+
+                        try:
+                            sort_stage = next(sorting)
+                        except StopIteration:
+                            return
+                        print(sort_stage)
+                    elif event.type == pygame.MOUSEBUTTONUP:
+                        if event.button == 1:
+                            self.left_button.is_clicked = False
+                            self.right_button.is_clicked = False
+
+            if self.initialized:
+                self.left_button.draw(self.screen)
+                self.right_button.draw(self.screen)
             self.display.flip()
+
+
+    def main_loop(self):
+        self.init_window()
+        #get user name
+        #get the list
+        self.start_sorting()
+
+        #self.results
 
         pygame.quit()
 
 
 if __name__ == '__main__':
+    #! initialize with the list
     sort = Sorter()
 
     # * Lists
