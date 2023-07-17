@@ -1,22 +1,24 @@
 # * imports
+from io import BytesIO
+
+import fonts.ttf as fonts
+# * pygame
+import pygame
 import requests as rq
 # * images
 from PIL import Image
-from io import BytesIO
-# * pygame
-import pygame
-import fonts.ttf as fonts
+
+from Anilist import Anilist
+from Button import Button
 # * my modules
 from Sorter import Sorter, Selection
-from Button import Button
-import threading
 
 
 class RunWindow:
 
     def __init__(self):
-        self.right_button = Button(210, 450, 140, 50, (21, 31, 46))
-        self.left_button = Button(50, 450, 140, 50, (21, 31, 46))
+        self.right_button = Button(210, 400, 140, 50, (21, 31, 46))
+        self.left_button = Button(50, 400, 140, 50, (21, 31, 46))
         pygame.init()
         pygame.font.init()
         self.initialized = False
@@ -35,8 +37,7 @@ class RunWindow:
         self.display.set_caption("Anilist Sorter")
         self.screen.fill(self.background_color)
         # + add different aspect to the window
-        self.make_label(25, 25, width - 50, height / 8, (21, 31, 46), sort.user)
-        # self.add_images()
+        self.make_label(25, 25, width - 50, height / 8, (21, 31, 46), anilist.user)
         self.add_icon()
         # + initialize
         self.initialized = True
@@ -48,10 +49,10 @@ class RunWindow:
         new_icon = pygame.image.frombytes(image_data_bytes, image_data_size, "RGBA")
         self.display.set_icon(new_icon)
 
-    def add_images(self):
-        pass
-        # self.image1 = pygame.image.load(BytesIO(sort.object_dict["left"].pic)).convert()
-        # self.image2 = pygame.image.load(BytesIO(sort.object_dict["right"].pic)).convert()
+    def add_image(self, image, width, height):
+        image = pygame.image.load(BytesIO(image.pic)).convert()
+        image = pygame.transform.scale(image, (width, height))
+        return image
 
     def make_label(self, x, y, width, height, color, label):
         pygame.draw.rect(self.screen, color, (x, y, width, height))
@@ -63,59 +64,62 @@ class RunWindow:
 
     def start_sorting(self):
         sorting = sort.merge_sort()
-        sort_stage = next(sorting)
-        print(sort_stage)
+        try:
+            sort_stage = next(sorting)
+        except StopIteration:
+            return sorting
+        left_pick = sort_stage[0]
+        right_pick = sort_stage[1]
+        print(f'{left_pick.name}, {right_pick.name}')
         while True:
-            self.clock.tick(60)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
+            event = pygame.event.wait()
 
-                        self.left_button.click(event.pos)
-                        self.right_button.click(event.pos)
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    self.left_button.click(event.pos)
+                    self.right_button.click(event.pos)
 
-                        if self.left_button.is_clicked:
-                            sort.select(Selection.LEFT)
+                    if self.left_button.is_clicked:
+                        sort.select(Selection.LEFT)
+                        self.left_button.is_clicked = False
 
-                        if self.right_button.is_clicked:
-                            sort.select(Selection.RIGHT)
+                    if self.right_button.is_clicked:
+                        sort.select(Selection.RIGHT)
+                        self.right_button.is_clicked = False
 
-                        try:
-                            sort_stage = next(sorting)
-                        except StopIteration:
-                            return
-                        print(sort_stage)
-                    elif event.type == pygame.MOUSEBUTTONUP:
-                        if event.button == 1:
-                            self.left_button.is_clicked = False
-                            self.right_button.is_clicked = False
+                    try:
+                        sort_stage = next(sorting)
+                    except StopIteration:
+                        return sorting
+
+                    left_pick = sort_stage[0]
+                    right_pick = sort_stage[1]
+                    print(f'{left_pick.name}, {right_pick.name}')
 
             if self.initialized:
                 self.left_button.draw(self.screen)
                 self.right_button.draw(self.screen)
-            self.display.flip()
+                self.screen.blit(self.add_image(left_pick, 140, 210), (50, 150))
+                self.screen.blit(self.add_image(right_pick, 140, 210), (210, 150))
 
+            self.display.flip()
 
     def main_loop(self):
         self.init_window()
-        #get user name
-        #get the list
+        # ? get username
+        # ? get the list
         self.start_sorting()
-
-        #self.results
+        # ? self.results
 
         pygame.quit()
 
 
 if __name__ == '__main__':
-    #! initialize with the list
-    sort = Sorter()
-
-    # * Lists
-
-    sort.get_list()
+    # ! initialize with the list
+    anilist = Anilist()
+    sort = Sorter(anilist.get_list())  # list
 
     # * Run Window
 
