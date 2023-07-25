@@ -14,18 +14,14 @@ from Exceptions import *
 
 
 class Anilist:
-    def __init__(self):
+    def __init__(self, username):
         self.object_dict = None
         self.name_list = None
         self.char_list = []
         self.user = None
         self.path = pathlib.Path("Users")
         self.user_path = pathlib.Path()
-
-        # ! Automatic input
-        self.user_input = input("Enter Account name: ").strip()
-        # ! Manual input
-        # self.user_input = "Amvi"
+        self.user_input = username.strip()
 
         # + Searches each sub-folder in path for .txt and make a list of all users in storage
         self.user_list = list(filter(lambda p: p.is_file(), self.path.rglob("**/*.txt")))

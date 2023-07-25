@@ -1,4 +1,4 @@
-# from random import sample
+from random import sample
 from enum import Enum
 
 
@@ -9,13 +9,12 @@ class Selection(Enum):
 
 class Sorter:
     def __init__(self, character_list: list):
+        self.sorted_list = None
         self.button = None
         self.character_list = character_list
 
     # * Sorting algorithm
 
-    # ! add random.sample
-    # ! Maybe replace this with object_dict and make name_list not needed
     # ! implement slicing of dictionaries and id
 
     def select(self, selection: Selection):
@@ -24,7 +23,7 @@ class Sorter:
     def merge_sort(self, _character_list=None):
 
         if _character_list is None:
-            _character_list = self.character_list
+            _character_list = sample(self.character_list, len(self.character_list))
 
         if len(_character_list) > 1:
             mid = len(_character_list) // 2
@@ -62,4 +61,5 @@ class Sorter:
                 right_index += 1
                 list_index += 1
 
+            self.sorted_list = _character_list
             return _character_list

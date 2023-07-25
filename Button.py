@@ -2,13 +2,12 @@ import pygame
 
 
 class Button:
-    def __init__(self, x, y, width, height, color):
+    def __init__(self, x, y, width, height):
         self.rect = pygame.Rect(x, y, width, height)
-        self.color = color
         self.is_clicked = False
 
-    def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
+    def draw(self, surface, color):
+        pygame.draw.rect(surface, color, self.rect)
 
     def click(self, pos):
         if self.rect.collidepoint(pos):
